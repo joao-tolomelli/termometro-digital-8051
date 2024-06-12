@@ -1,0 +1,417 @@
+,,,;================================================================================
+,,,; --- Mapeamento de Hardware ---
+000B,,,         rs      equ     P1.5           ;Reg Select ligado em P1.7
+000B,,,         rw      equ     P1.6           ;Read/Write ligado em P1.6
+000B,,,         en      equ     P1.7           ;Enable ligado em P1.5
+000D,,,         dat     equ     P2             ;Bits de dados em todo P2
+000B,,,         DQ      BIT     P3.7           ;One wire
+,,,;================================================================================
+,,,; --- Constantes ---
+,,,         WDLSB   DATA    30H
+,,,         WDMSB   DATA    31H
+,,,
+,,,;================================================================================
+,,,; --- Vetor de RESET ---
+,,,        org     0000h                    ;origem no endereço 00h de memória
+,,,
+,,,; --- Configuração da comunicação serial ---
+,,,
+0000,75 98 50,,        mov     SCON,#01010000b
+0003,75 89 20,,        mov     TMOD,#20h
+0006,75 8B FD,,        mov     TL1,#0FDh
+0009,75 8D FD,,        mov     TH1,#0FDh
+000C,53 87 7F,,        anl     PCON,#01111111b
+000F,D2 8E,,        setb    TR1
+,,,
+0011,11 EC,,        acall   delay500ms               ;aguarda 500ms para estabilizar
+,,,
+,,,;================================================================================
+,,,; --- Programa Principal ---
+0013,,inicio,inicio:
+,,,
+0013,11 65,,        acall   lcd_init                 ;Chama sub rotina de inicialização
+,,,
+,,,; --- Atualiza com display com o texto de inicialização ---
+0015,12 01 00,,        lcall   DSWD                    ;Realiza a leitura do sensor
+0018,90 02 27,,        mov     dptr,#LCD_INIT1         ;Move mensagem para DPTR
+001B,11 8B,,        acall   send_lcd                ;Chama sub rotina para enviar mensagem para LCD
+001D,11 E2,,        acall   new_line                ;Chama sub rotina para ir para próxima linha
+001F,90 02 37,,        mov     dptr,#LCD_INIT2         ;Move mensagem para DPTR
+0022,11 8B,,        acall   send_lcd                ;Chama sub rotina para enviar mensagem para LCD
+,,,
+0024,11 EC,,        acall   delay500ms              ;aguarda 500ms
+0026,11 EC,,        acall   delay500ms              ;aguarda 500ms
+0028,11 EC,,        acall   delay500ms              ;aguarda 500ms
+,,,
+002A,11 E7,,        acall   lcd_home                ;Chama sub rotina para voltar ao início do lcd
+,,,
+,,,; --- Loop das telas ---
+002C,,loop,loop:
+,,,
+002C,12 01 00,,        lcall   DSWD                    ;Realiza a leitura do sensor
+,,,
+,,,; --- Primeira tela ---
+002F,90 01 E9,,        mov     dptr,#LCD1              ;Move mensagem para DPTR
+0032,11 8B,,        acall   send_lcd                ;Chama sub rotina para enviar mensagem para LCD
+,,,
+0034,11 E2,,        acall   new_line                ;Chama sub rotina para ir para próxima linha
+,,,
+0036,90 01 F9,,        mov     dptr,#LCD2              ;Move mensagem para DPTR
+0039,11 8B,,        acall   send_lcd                ;Chama sub rotina para enviar mensagem para LCD
+,,,
+003B,11 EC,,        acall   delay500ms              ;aguarda 500ms
+003D,11 EC,,        acall   delay500ms              ;aguarda 500ms
+003F,11 EC,,        acall   delay500ms              ;aguarda 500ms
+0041,11 EC,,        acall   delay500ms              ;aguarda 500ms
+0043,11 EC,,        acall   delay500ms              ;aguarda 500ms
+0045,11 EC,,        acall   delay500ms              ;aguarda 500ms
+,,,
+0047,11 E7,,        acall   lcd_home                ;Chama sub rotina para voltar ao início do lcd
+,,,
+,,,; --- Segunda tela ---
+0049,90 02 09,,        mov     dptr,#LCD3              ;Move mensagem para DPTR
+004C,11 8B,,        acall   send_lcd                ;Chama sub rotina para enviar mensagem para LCD
+,,,
+004E,11 E2,,        acall   new_line                ;Chama sub rotina para ir para próxima linha
+,,,
+0050,90 02 19,,        mov     dptr,#LCD4              ;Move mensagem para DPTR
+0053,11 96,,        acall   send_lcd_TEMP           ;Chama sub rotina para enviar mensagem para LCD
+,,,
+0055,11 EC,,        acall   delay500ms              ;aguarda 500ms
+0057,11 EC,,        acall   delay500ms              ;aguarda 500ms
+0059,11 EC,,        acall   delay500ms              ;aguarda 500ms
+005B,11 EC,,        acall   delay500ms              ;aguarda 500ms
+005D,11 EC,,        acall   delay500ms              ;aguarda 500ms
+005F,11 EC,,        acall   delay500ms              ;aguarda 500ms
+,,,
+0061,11 E7,,        acall   lcd_home                ;Chama sub rotina para voltar ao início do lcd
+,,,
+0063,01 2C,,        ajmp    loop                    ;Loop infinito
+,,,
+,,,;================================================================================
+,,,
+0065,,lcd_init,lcd_init:                               ;Sub Rotina para Inicialização do Display
+,,,
+0065,74 3C,,        mov      a,#60d                 ;move literal 00111100b para acc
+0067,11 76,,        acall    config                 ;chama sub rotina config
+0069,74 0E,,        mov      a,#14d                 ;move literal 00001110b para acc
+006B,11 76,,        acall    config                 ;chama sub rotina config
+006D,74 01,,        mov      a,#1d                  ;move literal 00000001b para acc
+006F,11 76,,        acall    config                 ;chama sub rotina config
+0071,74 06,,        mov      a,#6d                  ;move literal 00000110b para acc
+0073,11 76,,        acall    config                 ;chama sub rotina config
+0075,22,,        ret                             ;retorna
+,,,
+,,,;================================================================================
+,,,
+0076,,config,config:                                 ;Sub Rotina de Configuração
+,,,
+0076,C2 97,,        clr      en                     ;limpa pino en
+0078,C2 95,,        clr      rs                     ;limpa pino rs
+007A,C2 96,,        clr      rw                     ;limpa pino rw
+007C,11 DD,,        acall    wait                   ;aguarda 55us
+007E,D2 97,,        setb     en                     ;aciona enable
+0080,11 DD,,        acall    wait                   ;aguarda 55us
+0082,F5 A0,,        mov      dat,a                  ;carrega dados em Port P2
+0084,11 DD,,        acall    wait                   ;aguarda 55us com barramento igual ao valor de acc
+0086,C2 97,,        clr      en                     ;limpa pino en
+0088,11 DD,,        acall    wait                   ;aguarda 55us
+008A,22,,        ret                             ;retorna
+,,,
+,,,;================================================================================
+008B,,send_lcd,send_lcd:                               ;Sub Rotina para Enviar dados ao LCD
+,,,
+008B,78 00,,        mov      R0,#0d                 ;Move valor 0d para R0
+008D,,send,send:
+008D,E8,,        mov      a,R0                   ;Move conteúdo de R0 para acc
+008E,08,,        inc      R0                     ;Incrementa acc
+008F,93,,        movc     a,@a+dptr              ;Move o byte relativo de dptr somado
+,,,                                        ;com o valor de acc para acc
+0090,11 C8,,        acall    w_dat                  ;chama sub rotina para escrita de dados
+0092,B8 10 F8,,        cjne     R0,#16d,send           ;compara R0 com valor de colunas e desvia se for diferente
+,,,
+0095,22,,        ret                             ;retorna
+,,,;================================================================================
+,,,
+0096,,send_lcd_TEMP,send_lcd_TEMP:                          ;Sub Rotina para Enviar dados de temperatura ao LCD
+0096,78 00,,        mov      R0,#0d                 ;Move valor 0d para R0
+0098,,send_TEMP1,send_TEMP1:
+0098,E8,,        mov      a,R0                   ;Move conteúdo de R0 para acc
+0099,08,,        inc      R0                     ;Incrementa acc
+009A,93,,        movc     a,@a+dptr              ;Move o byte relativo de dptr somado
+,,,                                        ;com o valor de acc para acc
+009B,11 C8,,        acall    w_dat                  ;chama sub rotina para escrita de dados
+009D,B8 06 F8,,        cjne     R0,#6d,send_TEMP1      ;compara R0 com valor de colunas e desvia se for diferente
+,,,
+00A0,E5 42,,        mov      A,42H
+00A2,44 30,,        orl      A,#30H
+00A4,F5 42,,        mov      42H,A
+00A6,11 C8,,        acall    w_dat
+,,,
+00A8,E5 43,,        mov      A,43H
+00AA,44 30,,        orl      A,#30H
+00AC,F5 43,,        mov      43H,A
+00AE,11 C8,,        acall    w_dat
+,,,
+,,,; --- Envio dos dados via Bluetooth ---
+00B0,E5 42,,        mov      A,42H
+00B2,12 01 E1,,        lcall    send_byte_BT
+00B5,E5 43,,        mov      A,43H
+00B7,12 01 E1,,        lcall    send_byte_BT
+00BA,74 3B,,        mov      A,#3Bh
+00BC,12 01 E1,,        lcall    send_byte_BT
+,,,
+00BF,,send_TEMP2,send_TEMP2:
+00BF,E8,,        mov      a,R0                   ;Move conteúdo de R0 para acc
+00C0,08,,        inc      R0                     ;Incrementa acc
+00C1,93,,        movc     a,@a+dptr              ;Move o byte relativo de dptr somado
+,,,                                        ;com o valor de acc para acc
+00C2,11 C8,,        acall    w_dat                  ;chama sub rotina para escrita de dados
+00C4,B8 0E F8,,        cjne     R0,#14d,send_TEMP2     ;compara R0 com valor de colunas e desvia se for diferente
+,,,
+00C7,22,,        ret                             ;retorna
+,,,
+,,,;================================================================================
+00C8,,w_dat,w_dat:                                  ;Sub Rotina para preparar para escrita de mensagem
+,,,
+00C8,C2 97,,        clr      en                     ;limpa enable
+00CA,D2 95,,        setb     rs                     ;seta rs
+00CC,C2 96,,        clr      rw                     ;limpa rw (escrita)
+00CE,11 DD,,        acall    wait                   ;aguarda 55us
+00D0,D2 97,,        setb     en                     ;seta enable
+00D2,11 DD,,        acall    wait                   ;aguarda 55us
+00D4,F5 A0,,        mov      dat,a                  ;carrega mensagem
+00D6,11 DD,,        acall    wait                   ;aguarda 55us
+00D8,C2 97,,        clr      en                     ;limpa enable
+00DA,11 DD,,        acall    wait                   ;aguarda 55us
+00DC,22,,        ret                             ;retorna
+,,,
+,,,;================================================================================
+00DD,,wait,wait:                                   ;Sub Rotina para atraso de 55us
+,,,
+00DD,7D 37,,        mov     R5,#055d                ;Carrega 55d em R5
+00DF,,aux0,aux0:
+00DF,DD FE,,        djnz    R5,aux0                 ;Decrementa R5. R5 igual a zero? Não, desvia para aux
+00E1,22,,        ret                             ;Sim, retorna
+,,,
+,,,;================================================================================
+00E2,,new_line,new_line:                               ;Sub Rotina para ir para nova linha
+,,,
+00E2,74 C0,,        mov      a,#0C0h                ;Carrega 192d em acc
+00E4,11 76,,        acall    config                 ;chama sub rotina config
+00E6,22,,        ret                             ;retorna
+,,,
+,,,;================================================================================
+00E7,,lcd_home,lcd_home:                               ;Sub Rotina para ir para o início do LCD
+,,,
+00E7,74 02,,        mov      a,#02d                 ;Carrega 2d em acc
+00E9,11 76,,        acall    config                 ;chama sub rotina config
+00EB,22,,        ret                             ;retorna
+,,,
+,,,;================================================================================
+,,,
+00EC,,delay500ms,delay500ms:                             ;Sub Rotina para atraso de 500ms
+,,,                                        ; 2       | ciclos de máquina do mnemônico call
+00EC,79 FA,,        mov     R1,#0fah                ; 1       | move o valor 250 decimal para o registrador R1
+,,,
+00EE,,aux1,aux1:
+00EE,7A F9,,        mov     R2,#0f9h                ; 1 x 250 | move o valor 249 decimal para o registrador R2
+00F0,00,,        nop                             ; 1 x 250
+00F1,00,,        nop                             ; 1 x 250
+00F2,00,,        nop                             ; 1 x 250
+00F3,00,,        nop                             ; 1 x 250
+00F4,00,,        nop                             ; 1 x 250
+,,,
+00F5,,aux2,aux2:
+00F5,00,,        nop                             ; 1 x 250 x 249 = 62250
+00F6,00,,        nop                             ; 1 x 250 x 249 = 62250
+00F7,00,,        nop                             ; 1 x 250 x 249 = 62250
+00F8,00,,        nop                             ; 1 x 250 x 249 = 62250
+00F9,00,,        nop                             ; 1 x 250 x 249 = 62250
+00FA,00,,        nop                             ; 1 x 250 x 249 = 62250
+,,,
+00FB,DA F8,,        djnz    R2,aux2                 ; 2 x 250 x 249 = 124500     | decrementa o R2 até chegar a
+00FD,D9 EF,,        djnz    R1,aux1                 ; 2 x 250                    | decrementa o R1 até chegar a
+,,,
+00FF,22,,        ret                             ; 2                          | retorna para a função main
+,,,                                        ;------------------------------------
+,,,                                        ; Total = 500005 us ~~ 500 ms = 0,5 seg
+,,,
+,,,
+,,,;================================================================================
+,,,
+0100,,DSWD,DSWD:                                   ; Lê a temperatura do DS18B20
+0100,12 01 80,,        LCALL   RSTSNR                  ; Inicializa o sensor
+0103,30 D5 3D,,        JNB     F0,KEND
+0106,78 CC,,        MOV     R0,#0CCH
+0108,12 01 64,,        LCALL   SEND_BYTE
+010B,78 44,,        MOV     R0,#44H
+010D,12 01 64,,        LCALL   SEND_BYTE               ; Send a Convert Command
+0110,D2 AF,,        SETB    EA
+0112,75 48 01,,        MOV     48H,#1
+0115,,SS2,SS2:
+0115,75 49 FF,,        MOV     49H,#255
+0118,,SS1,SS1:
+0118,75 4A FF,,        MOV     4AH,#255
+011B,,SS0,SS0:
+011B,D5 4A FD,,        DJNZ    4AH,SS0
+011E,D5 49 F7,,        DJNZ    49H,SS1
+0121,D5 48 F1,,        DJNZ    48H,SS2
+0124,C2 AF,,        CLR     EA
+0126,12 01 80,,        LCALL   RSTSNR
+0129,30 D5 17,,        JNB     F0,KEND
+012C,78 CC,,        MOV     R0,#0CCH
+012E,12 01 64,,        LCALL   SEND_BYTE
+0131,78 BE,,        MOV     R0,#0BEH
+0133,12 01 64,,        LCALL   SEND_BYTE               ; Send Read Scratchpad command
+0136,12 01 76,,        LCALL   READ_BYTE               ; Read the low byte from scratchpad
+0139,F5 30,,        MOV     WDLSB,A                 ; Save the temperature (low byte)
+013B,12 01 76,,        LCALL   READ_BYTE               ; Read the high byte from scratchpad
+013E,F5 31,,        MOV     WDMSB,A                 ; Save the temperature (high byte)
+0140,12 01 46,,        LCALL   TRANS12
+0143,,KEND,KEND:
+0143,D2 AF,,        SETB    EA
+0145,22,,        RET
+,,,;================================================================================
+,,,;
+0146,,TRANS12,TRANS12:
+0146,E5 30,,         MOV   A,30H
+0148,54 F0,,         ANL   A,#0F0H
+014A,F5 3A,,         MOV   3AH,A
+014C,E5 31,,         MOV   A,31H
+014E,54 0F,,         ANL   A,#0FH
+0150,45 3A,,         ORL   A,3AH
+0152,C4,,         SWAP  A
+0153,75 F0 0A,,         MOV   B,#10
+0156,84,,         DIV   AB
+0157,85 F0 43,,         MOV   43H,B
+015A,75 F0 0A,,         MOV   b,#10
+015D,84,,         DIV   ab
+015E,85 F0 42,,         MOV   42H,B
+0161,F5 41,,         MOV   41H,A
+0163,22,,         RET
+,,,;================================================================================
+,,,; Send a byte to the 1 wire line
+0164,,SEND_BYTE,SEND_BYTE: ;
+0164,E8,,         MOV   A,R0
+0165,7D 08,,         MOV   R5,#8
+0167,C3,SEN3,SEN3:    CLR   C
+0168,13,,         RRC   A
+0169,40 05,,         JC    SEN1
+016B,12 01 A9,,         LCALL WRITE_0
+016E,80 03,,         SJMP  SEN2
+0170,12 01 B2,SEN1,SEN1:    LCALL WRITE_1
+0173,DD F2,SEN2,SEN2:    DJNZ  R5,SEN3 ;
+0175,22,,         RET
+,,,;================================================================================
+,,,; Read a byte from the 1 wire line
+0176,,READ_BYTE,READ_BYTE:
+0176,7D 08,,         MOV   R5,#8
+0178,12 01 C0,READ1,READ1:   LCALL READ
+017B,13,,         RRC   A
+017C,DD FA,,         DJNZ  R5,READ1 ;
+017E,F8,,         MOV   R0,A
+017F,22,,         RET
+,,,;================================================================================
+,,,; Reset 1 wire line
+0180,D2 B7,RSTSNR,RSTSNR:  SETB  DQ
+0182,00,,         NOP
+0183,00,,         NOP
+0184,C2 B7,,         CLR   DQ
+0186,7E FA,,         MOV   R6,#250 ;
+0188,DE FE,,         DJNZ  R6,$
+018A,7E 32,,         MOV   R6,#50
+018C,DE FE,,         DJNZ  R6,$
+018E,D2 B7,,         SETB  DQ ;
+,,,
+0190,7E 0F,,         MOV   R6,#15
+0192,DE FE,,         DJNZ  R6,$
+0194,12 01 9E,,         CALL  CHCK ;
+0197,7E 3C,,         MOV   R6,#60
+0199,DE FE,,         DJNZ  R6,$
+019B,D2 B7,,         SETB  DQ
+019D,22,,         RET
+,,,
+,,,
+,,,;================================================================================
+,,,; low level subroutines
+019E,A2 B7,CHCK,CHCK:    MOV   C,DQ
+01A0,40 04,,         JC    RST0
+01A2,D2 D5,,         SETB  F0 ;
+01A4,80 02,,         SJMP  CHCK0
+01A6,C2 D5,RST0,RST0:    CLR   F0 ;
+01A8,22,CHCK0,CHCK0:   RET
+,,,
+,,,;================================================================================
+01A9,,WRITE_0,WRITE_0:
+01A9,C2 B7,,         CLR   DQ
+01AB,7E 1E,,         MOV   R6,#30
+01AD,DE FE,,         DJNZ  R6,$
+01AF,D2 B7,,         SETB  DQ
+01B1,22,,         RET
+,,,;================================================================================
+01B2,,WRITE_1,WRITE_1:
+01B2,C2 B7,,         CLR   DQ
+01B4,00,,         NOP
+01B5,00,,         NOP
+01B6,00,,         NOP
+01B7,00,,         NOP
+01B8,00,,         NOP
+01B9,D2 B7,,         SETB  DQ
+01BB,7E 1E,,         MOV   R6,#30
+01BD,DE FE,,         DJNZ  R6,$
+01BF,22,,         RET
+,,,
+,,,;================================================================================
+01C0,D2 B7,READ,READ:    SETB  DQ
+01C2,00,,         NOP
+01C3,00,,         NOP
+01C4,C2 B7,,         CLR   DQ
+01C6,00,,         NOP
+01C7,00,,         NOP
+01C8,D2 B7,,         SETB  DQ
+01CA,00,,         NOP
+01CB,00,,         NOP
+01CC,00,,         NOP
+01CD,00,,         NOP
+01CE,00,,         NOP
+01CF,00,,         NOP
+01D0,00,,         NOP
+01D1,A2 B7,,         MOV   C,DQ
+01D3,7E 17,,         MOV   R6,#23
+01D5,DE FE,,         DJNZ  R6,$
+01D7,22,,         RET
+,,,
+,,,;================================================================================
+01D8,7C 14,DELAY10,DELAY10: MOV   R4,#20
+01DA,7D 1E,D2,D2:      MOV   R5,#30
+01DC,DD FE,,         DJNZ  R5,$
+01DE,DC FA,,         DJNZ  R4,D2
+01E0,22,,         RET
+,,,;================================================================================
+01E1,,send_byte_BT,send_byte_BT:
+01E1,F5 99,,         mov    SBUF,A
+01E3,30 99 FD,,         jnb    TI,$
+01E6,C2 99,,         clr    TI
+01E8,22,,         ret
+,,,;==========================================================================
+,,,; Definição de Mensagens para Enviar ao LCD
+01E9,,LCD1,LCD1:
+01E9,20 20 20 20,,        db    '     BRASIL     '
+,,,
+01F9,,LCD2,LCD2:
+01F9,20 46 4F 52,,        db    ' FORTALEZA - CE '
+,,,
+0209,,LCD3,LCD3:
+0209,20 20 20 54,,        db    '   TEMPERATURA  '
+,,,
+0219,,LCD4,LCD4:
+0219,20 20 20 20,,        db    '      ',11011111b,'C      '
+0227,,LCD_INIT1,LCD_INIT1:
+0227,20 20 49 4E,,        db    '  INICIALIZANDO '
+,,,
+0237,,LCD_INIT2,LCD_INIT2:
+0237,20 20 20 20,,        db    '       ...      '
+,,,
+000E,,,        end                     ;Final do programa
+,,,

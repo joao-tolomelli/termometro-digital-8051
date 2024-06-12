@@ -1,0 +1,674 @@
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 1
+
+
+
+
+
+       MCS-51 Family Macro Assembler   A S E M - 5 1   V 1.3
+       =====================================================
+
+
+
+	Source File:	..\main.asm
+	Object File:	Debug.HEX
+	List File:	Debug.lst
+
+
+
+ Line  I  Addr  Code            Source
+
+    1:				;================================================================================
+    2:				; --- Mapeamento de Hardware ---
+    3:		B      0095	         rs      equ     P1.5    	;Reg Select ligado em P1.7
+    4:		B      0096	         rw      equ     P1.6    	;Read/Write ligado em P1.6
+    5:		B      0097	         en      equ     P1.7    	;Enable ligado em P1.5
+    6:		D      00A0	         dat     equ     P2     	;Bits de dados em todo P2
+    7:		B	 B7		 DQ      BIT     P3.7    	;One wire
+    8:				;================================================================================
+    9:				; --- Constantes ---
+   10:		N	 30		 WDLSB   DATA    30H
+   11:		N	 31		 WDMSB   DATA    31H
+   12:
+   13:				;================================================================================
+   14:				; --- Vetor de RESET ---
+   15:		N      0000	        org     0000h          		 ;origem no endereço 00h de memória
+   16:
+   17:				; --- Configuração da comunicação serial ---
+   18:
+   19:	  0000	75 98 50		mov 	SCON,#01010000b
+   20:	  0003	75 89 20		mov	TMOD,#20h
+   21:	  0006	75 8B FD		mov	TL1,#0FDh
+   22:	  0009	75 8D FD		mov	TH1,#0FDh
+   23:	  000C	53 87 7F		anl	PCON,#01111111b
+   24:	  000F	D2 8E			setb	TR1
+   25:
+   26:	  0011	11 EC		        acall   delay500ms     		 ;aguarda 500ms para estabilizar
+   27:
+   28:				;================================================================================
+   29:				; --- Programa Principal ---
+   30:	  0013			inicio:
+   31:
+   32:	  0013	11 65		        acall   lcd_init       		 ;Chama sub rotina de inicialização
+   33:
+   34:				; --- Atualiza com display com o texto de inicialização ---
+   35:	  0015	12 01 00		lcall 	DSWD			;Realiza a leitura do sensor
+   36:	  0018	90 02 27	        mov     dptr,#LCD_INIT1 	;Move mensagem para DPTR
+   37:	  001B	11 8B		        acall   send_lcd        	;Chama sub rotina para enviar mensagem para LCD
+   38:	  001D	11 E2		        acall   new_line        	;Chama sub rotina para ir para próxima linha
+   39:	  001F	90 02 37	        mov     dptr,#LCD_INIT2 	;Move mensagem para DPTR
+   40:	  0022	11 8B		        acall   send_lcd        	;Chama sub rotina para enviar mensagem para LCD
+   41:
+   42:	  0024	11 EC		        acall   delay500ms      	;aguarda 500ms
+   43:	  0026	11 EC		        acall   delay500ms      	;aguarda 500ms
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 2
+
+
+
+ Line  I  Addr  Code            Source
+
+   44:	  0028	11 EC			acall   delay500ms      	;aguarda 500ms
+   45:
+   46:	  002A	11 E7			acall   lcd_home        	;Chama sub rotina para voltar ao início do lcd
+   47:
+   48:				; --- Loop das telas ---
+   49:	  002C			loop:
+   50:
+   51:	  002C	12 01 00	        lcall 	DSWD			;Realiza a leitura do sensor
+   52:
+   53:				; --- Primeira tela ---
+   54:	  002F	90 01 E9	        mov     dptr,#LCD1      	;Move mensagem para DPTR
+   55:	  0032	11 8B		        acall   send_lcd        	;Chama sub rotina para enviar mensagem para LCD
+   56:
+   57:	  0034	11 E2		        acall   new_line        	;Chama sub rotina para ir para próxima linha
+   58:
+   59:	  0036	90 01 F9	        mov     dptr,#LCD2      	;Move mensagem para DPTR
+   60:	  0039	11 8B		        acall   send_lcd        	;Chama sub rotina para enviar mensagem para LCD
+   61:
+   62:	  003B	11 EC		        acall   delay500ms      	;aguarda 500ms
+   63:	  003D	11 EC		        acall   delay500ms      	;aguarda 500ms
+   64:	  003F	11 EC			acall   delay500ms      	;aguarda 500ms
+   65:	  0041	11 EC			acall   delay500ms      	;aguarda 500ms
+   66:	  0043	11 EC		        acall   delay500ms      	;aguarda 500ms
+   67:	  0045	11 EC			acall   delay500ms      	;aguarda 500ms
+   68:
+   69:	  0047	11 E7		        acall   lcd_home        	;Chama sub rotina para voltar ao início do lcd
+   70:
+   71:				; --- Segunda tela ---
+   72:	  0049	90 02 09	        mov     dptr,#LCD3      	;Move mensagem para DPTR
+   73:	  004C	11 8B		        acall   send_lcd        	;Chama sub rotina para enviar mensagem para LCD
+   74:
+   75:	  004E	11 E2		        acall   new_line        	;Chama sub rotina para ir para próxima linha
+   76:
+   77:	  0050	90 02 19	        mov     dptr,#LCD4      	;Move mensagem para DPTR
+   78:	  0053	11 96		        acall   send_lcd_TEMP   	;Chama sub rotina para enviar mensagem para LCD
+   79:
+   80:	  0055	11 EC		        acall   delay500ms      	;aguarda 500ms
+   81:	  0057	11 EC		        acall   delay500ms      	;aguarda 500ms
+   82:	  0059	11 EC			acall   delay500ms      	;aguarda 500ms
+   83:	  005B	11 EC			acall   delay500ms      	;aguarda 500ms
+   84:	  005D	11 EC		        acall   delay500ms      	;aguarda 500ms
+   85:	  005F	11 EC			acall   delay500ms      	;aguarda 500ms
+   86:
+   87:	  0061	11 E7		        acall   lcd_home        	;Chama sub rotina para voltar ao início do lcd
+   88:
+   89:	  0063	01 2C		        ajmp    loop            	;Loop infinito
+   90:
+   91:				;================================================================================
+   92:
+   93:	  0065			lcd_init:                       	;Sub Rotina para Inicialização do Display
+   94:
+   95:	  0065	74 3C		        mov      a,#60d         	;move literal 00111100b para acc
+   96:	  0067	11 76		        acall    config         	;chama sub rotina config
+   97:	  0069	74 0E		        mov      a,#14d         	;move literal 00001110b para acc
+   98:	  006B	11 76		        acall    config         	;chama sub rotina config
+   99:	  006D	74 01		        mov      a,#1d          	;move literal 00000001b para acc
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 3
+
+
+
+ Line  I  Addr  Code            Source
+
+  100:	  006F	11 76		        acall    config         	;chama sub rotina config
+  101:	  0071	74 06		        mov      a,#6d          	;move literal 00000110b para acc
+  102:	  0073	11 76		        acall    config         	;chama sub rotina config
+  103:	  0075	22		        ret                     	;retorna
+  104:
+  105:				;================================================================================
+  106:
+  107:	  0076			config:                         	;Sub Rotina de Configuração
+  108:
+  109:	  0076	C2 97		        clr      en             	;limpa pino en
+  110:	  0078	C2 95		        clr      rs             	;limpa pino rs
+  111:	  007A	C2 96		        clr      rw             	;limpa pino rw
+  112:	  007C	11 DD		        acall    wait           	;aguarda 55us
+  113:	  007E	D2 97		        setb     en             	;aciona enable
+  114:	  0080	11 DD		        acall    wait           	;aguarda 55us
+  115:	  0082	F5 A0		        mov      dat,a          	;carrega dados em Port P2
+  116:	  0084	11 DD		        acall    wait           	;aguarda 55us com barramento igual ao valor de acc
+  117:	  0086	C2 97		        clr      en             	;limpa pino en
+  118:	  0088	11 DD		        acall    wait           	;aguarda 55us
+  119:	  008A	22		        ret                     	;retorna
+  120:
+  121:				;================================================================================
+  122:	  008B			send_lcd:                       	;Sub Rotina para Enviar dados ao LCD
+  123:
+  124:	  008B	78 00		        mov      R0,#0d         	;Move valor 0d para R0
+  125:	  008D			send:
+  126:	  008D	E8		        mov      a,R0           	;Move conteúdo de R0 para acc
+  127:	  008E	08		        inc      R0             	;Incrementa acc
+  128:	  008F	93		        movc     a,@a+dptr      	;Move o byte relativo de dptr somado
+  129:									;com o valor de acc para acc
+  130:	  0090	11 C8		        acall    w_dat          	;chama sub rotina para escrita de dados
+  131:	  0092	B8 10 F8	        cjne     R0,#16d,send   	;compara R0 com valor de colunas e desvia se for diferente
+  132:
+  133:	  0095	22		        ret                     	;retorna
+  134:				;================================================================================
+  135:
+  136:	  0096			send_lcd_TEMP:                      	;Sub Rotina para Enviar dados de temperatura ao LCD
+  137:	  0096	78 00			mov      R0,#0d         	;Move valor 0d para R0
+  138:	  0098			send_TEMP1:
+  139:	  0098	E8		        mov      a,R0           	;Move conteúdo de R0 para acc
+  140:	  0099	08		        inc      R0            	 	;Incrementa acc
+  141:	  009A	93		        movc     a,@a+dptr      	;Move o byte relativo de dptr somado
+  142:									;com o valor de acc para acc
+  143:	  009B	11 C8		        acall    w_dat          	;chama sub rotina para escrita de dados
+  144:	  009D	B8 06 F8	        cjne     R0,#6d,send_TEMP1   	;compara R0 com valor de colunas e desvia se for diferente
+  145:
+  146:	  00A0	E5 42			mov	 A,42H
+  147:	  00A2	44 30		        orl 	 A,#30H
+  148:	  00A4	F5 42			mov	 42H,A
+  149:	  00A6	11 C8		        acall    w_dat
+  150:
+  151:	  00A8	E5 43		        mov	 A,43H
+  152:	  00AA	44 30		        orl 	 A,#30H
+  153:	  00AC	F5 43			mov	 43H,A
+  154:	  00AE	11 C8		        acall    w_dat
+  155:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 4
+
+
+
+ Line  I  Addr  Code            Source
+
+  156:				; --- Envio dos dados via Bluetooth ---
+  157:	  00B0	E5 42		        mov	 A,42H
+  158:	  00B2	12 01 E1		lcall	 send_byte_BT
+  159:	  00B5	E5 43			mov	 A,43H
+  160:	  00B7	12 01 E1		lcall	 send_byte_BT
+  161:	  00BA	74 3B			mov	 A,#3Bh
+  162:	  00BC	12 01 E1		lcall	 send_byte_BT
+  163:
+  164:	  00BF			send_TEMP2:
+  165:	  00BF	E8		        mov      a,R0           	;Move conteúdo de R0 para acc
+  166:	  00C0	08		        inc      R0             	;Incrementa acc
+  167:	  00C1	93		        movc     a,@a+dptr     	 	;Move o byte relativo de dptr somado
+  168:									;com o valor de acc para acc
+  169:	  00C2	11 C8		        acall    w_dat          	;chama sub rotina para escrita de dados
+  170:	  00C4	B8 0E F8	        cjne     R0,#14d,send_TEMP2   	;compara R0 com valor de colunas e desvia se for diferente
+  171:
+  172:	  00C7	22		        ret                     	;retorna
+  173:
+  174:				;================================================================================
+  175:	  00C8			w_dat:                          	;Sub Rotina para preparar para escrita de mensagem
+  176:
+  177:	  00C8	C2 97		        clr      en             	;limpa enable
+  178:	  00CA	D2 95		        setb     rs             	;seta rs
+  179:	  00CC	C2 96		        clr      rw             	;limpa rw (escrita)
+  180:	  00CE	11 DD		        acall    wait           	;aguarda 55us
+  181:	  00D0	D2 97		        setb     en             	;seta enable
+  182:	  00D2	11 DD		        acall    wait           	;aguarda 55us
+  183:	  00D4	F5 A0		        mov      dat,a          	;carrega mensagem
+  184:	  00D6	11 DD		        acall    wait           	;aguarda 55us
+  185:	  00D8	C2 97		        clr      en             	;limpa enable
+  186:	  00DA	11 DD		        acall    wait           	;aguarda 55us
+  187:	  00DC	22		        ret                     	;retorna
+  188:
+  189:				;================================================================================
+  190:	  00DD			wait:                           	;Sub Rotina para atraso de 55us
+  191:
+  192:	  00DD	7D 37		        mov     R5,#055d        	;Carrega 55d em R5
+  193:	  00DF			aux0:
+  194:	  00DF	DD FE		        djnz    R5,aux0         	;Decrementa R5. R5 igual a zero? Não, desvia para aux
+  195:	  00E1	22		        ret                     	;Sim, retorna
+  196:
+  197:				;================================================================================
+  198:	  00E2			new_line:                       	;Sub Rotina para ir para nova linha
+  199:
+  200:	  00E2	74 C0		        mov      a,#0C0h        	;Carrega 192d em acc
+  201:	  00E4	11 76		        acall    config         	;chama sub rotina config
+  202:	  00E6	22		        ret                     	;retorna
+  203:
+  204:				;================================================================================
+  205:	  00E7			lcd_home:                       	;Sub Rotina para ir para o início do LCD
+  206:
+  207:	  00E7	74 02		        mov      a,#02d         	;Carrega 2d em acc
+  208:	  00E9	11 76		        acall    config         	;chama sub rotina config
+  209:	  00EB	22		        ret                     	;retorna
+  210:
+  211:				;================================================================================
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 5
+
+
+
+ Line  I  Addr  Code            Source
+
+  212:
+  213:	  00EC			delay500ms:                     	;Sub Rotina para atraso de 500ms
+  214:									; 2       | ciclos de máquina do mnemônico call
+  215:	  00EC	79 FA		        mov     R1,#0fah        	; 1       | move o valor 250 decimal para o registrador R1
+  216:
+  217:	  00EE			aux1:
+  218:	  00EE	7A F9		        mov     R2,#0f9h        	; 1 x 250 | move o valor 249 decimal para o registrador R2
+  219:	  00F0	00		        nop                     	; 1 x 250
+  220:	  00F1	00		        nop                     	; 1 x 250
+  221:	  00F2	00		        nop                     	; 1 x 250
+  222:	  00F3	00		        nop                     	; 1 x 250
+  223:	  00F4	00		        nop                     	; 1 x 250
+  224:
+  225:	  00F5			aux2:
+  226:	  00F5	00		        nop                     	; 1 x 250 x 249 = 62250
+  227:	  00F6	00		        nop                     	; 1 x 250 x 249 = 62250
+  228:	  00F7	00		        nop                     	; 1 x 250 x 249 = 62250
+  229:	  00F8	00		        nop                     	; 1 x 250 x 249 = 62250
+  230:	  00F9	00		        nop                     	; 1 x 250 x 249 = 62250
+  231:	  00FA	00		        nop                     	; 1 x 250 x 249 = 62250
+  232:
+  233:	  00FB	DA F8		        djnz    R2,aux2         	; 2 x 250 x 249 = 124500     | decrementa o R2 até chegar a
+				zero
+  234:	  00FD	D9 EF		        djnz    R1,aux1         	; 2 x 250                    | decrementa o R1 até chegar a
+				zero
+  235:
+  236:	  00FF	22		        ret                     	; 2                          | retorna para a função main
+  237:									;------------------------------------
+  238:									; Total = 500005 us ~~ 500 ms = 0,5 seg
+  239:
+  240:
+  241:				;================================================================================
+  242:
+  243:	  0100			DSWD:					; Lê a temperatura do DS18B20
+  244:	  0100	12 01 80		LCALL 	RSTSNR      		; Inicializa o sensor
+  245:	  0103	30 D5 3D	        JNB   	F0,KEND
+  246:	  0106	78 CC		        MOV   	R0,#0CCH
+  247:	  0108	12 01 64	        LCALL 	SEND_BYTE
+  248:	  010B	78 44		        MOV   	R0,#44H
+  249:	  010D	12 01 64	        LCALL 	SEND_BYTE   		; Send a Convert Command
+  250:	  0110	D2 AF		        SETB  	EA
+  251:	  0112	75 48 01	        MOV   	48H,#1
+  252:	  0115			SS2:
+  253:	  0115	75 49 FF	        MOV   	49H,#255
+  254:	  0118			SS1:
+  255:	  0118	75 4A FF	        MOV   	4AH,#255
+  256:	  011B			SS0:
+  257:	  011B	D5 4A FD	        DJNZ  	4AH,SS0
+  258:	  011E	D5 49 F7	        DJNZ  	49H,SS1
+  259:	  0121	D5 48 F1	        DJNZ  	48H,SS2
+  260:	  0124	C2 AF		        CLR   	EA
+  261:	  0126	12 01 80	        LCALL 	RSTSNR
+  262:	  0129	30 D5 17	        JNB   	F0,KEND
+  263:	  012C	78 CC		        MOV   	R0,#0CCH
+  264:	  012E	12 01 64	        LCALL 	SEND_BYTE
+  265:	  0131	78 BE		        MOV   	R0,#0BEH
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 6
+
+
+
+ Line  I  Addr  Code            Source
+
+  266:	  0133	12 01 64	        LCALL 	SEND_BYTE      		; Send Read Scratchpad command
+  267:	  0136	12 01 76	        LCALL 	READ_BYTE      		; Read the low byte from scratchpad
+  268:	  0139	F5 30		        MOV   	WDLSB,A        		; Save the temperature (low byte)
+  269:	  013B	12 01 76	        LCALL 	READ_BYTE      		; Read the high byte from scratchpad
+  270:	  013E	F5 31		        MOV   	WDMSB,A        		; Save the temperature (high byte)
+  271:	  0140	12 01 46	        LCALL 	TRANS12
+  272:	  0143			KEND:
+  273:	  0143	D2 AF		        SETB  	EA
+  274:	  0145	22		        RET
+  275:				;================================================================================
+  276:				;
+  277:	  0146			TRANS12:
+  278:	  0146	E5 30		         MOV   A,30H
+  279:	  0148	54 F0		         ANL   A,#0F0H
+  280:	  014A	F5 3A		         MOV   3AH,A
+  281:	  014C	E5 31		         MOV   A,31H
+  282:	  014E	54 0F		         ANL   A,#0FH
+  283:	  0150	45 3A		         ORL   A,3AH
+  284:	  0152	C4		         SWAP  A
+  285:	  0153	75 F0 0A	         MOV   B,#10
+  286:	  0156	84		         DIV   AB
+  287:	  0157	85 F0 43	         MOV   43H,B
+  288:	  015A	75 F0 0A	         MOV   b,#10
+  289:	  015D	84		         DIV   ab
+  290:	  015E	85 F0 42	         MOV   42H,B
+  291:	  0161	F5 41		         MOV   41H,A
+  292:	  0163	22		         RET
+  293:				;================================================================================
+  294:				; Send a byte to the 1 wire line
+  295:	  0164			SEND_BYTE: ;
+  296:	  0164	E8		         MOV   A,R0
+  297:	  0165	7D 08		         MOV   R5,#8
+  298:	  0167	C3		SEN3:    CLR   C
+  299:	  0168	13		         RRC   A
+  300:	  0169	40 05		         JC    SEN1
+  301:	  016B	12 01 A9	         LCALL WRITE_0
+  302:	  016E	80 03		         SJMP  SEN2
+  303:	  0170	12 01 B2	SEN1:    LCALL WRITE_1
+  304:	  0173	DD F2		SEN2:    DJNZ  R5,SEN3 ;
+  305:	  0175	22		         RET
+  306:				;================================================================================
+  307:				; Read a byte from the 1 wire line
+  308:	  0176			READ_BYTE:
+  309:	  0176	7D 08		         MOV   R5,#8
+  310:	  0178	12 01 C0	READ1:   LCALL READ
+  311:	  017B	13		         RRC   A
+  312:	  017C	DD FA		         DJNZ  R5,READ1 ;
+  313:	  017E	F8		         MOV   R0,A
+  314:	  017F	22		         RET
+  315:				;================================================================================
+  316:				; Reset 1 wire line
+  317:	  0180	D2 B7		RSTSNR:  SETB  DQ
+  318:	  0182	00		         NOP
+  319:	  0183	00		         NOP
+  320:	  0184	C2 B7		         CLR   DQ
+  321:	  0186	7E FA		         MOV   R6,#250 ;
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 7
+
+
+
+ Line  I  Addr  Code            Source
+
+  322:	  0188	DE FE		         DJNZ  R6,$
+  323:	  018A	7E 32		         MOV   R6,#50
+  324:	  018C	DE FE		         DJNZ  R6,$
+  325:	  018E	D2 B7		         SETB  DQ ;
+  326:
+  327:	  0190	7E 0F		         MOV   R6,#15
+  328:	  0192	DE FE		         DJNZ  R6,$
+  329:	  0194	12 01 9E	         CALL  CHCK ;
+  330:	  0197	7E 3C		         MOV   R6,#60
+  331:	  0199	DE FE		         DJNZ  R6,$
+  332:	  019B	D2 B7		         SETB  DQ
+  333:	  019D	22		         RET
+  334:
+  335:
+  336:				;================================================================================
+  337:				; low level subroutines
+  338:	  019E	A2 B7		CHCK:    MOV   C,DQ
+  339:	  01A0	40 04		         JC    RST0
+  340:	  01A2	D2 D5		         SETB  F0 ;
+  341:	  01A4	80 02		         SJMP  CHCK0
+  342:	  01A6	C2 D5		RST0:    CLR   F0 ;
+  343:	  01A8	22		CHCK0:   RET
+  344:
+  345:				;================================================================================
+  346:	  01A9			WRITE_0:
+  347:	  01A9	C2 B7		         CLR   DQ
+  348:	  01AB	7E 1E		         MOV   R6,#30
+  349:	  01AD	DE FE		         DJNZ  R6,$
+  350:	  01AF	D2 B7		         SETB  DQ
+  351:	  01B1	22		         RET
+  352:				;================================================================================
+  353:	  01B2			WRITE_1:
+  354:	  01B2	C2 B7		         CLR   DQ
+  355:	  01B4	00		         NOP
+  356:	  01B5	00		         NOP
+  357:	  01B6	00		         NOP
+  358:	  01B7	00		         NOP
+  359:	  01B8	00		         NOP
+  360:	  01B9	D2 B7		         SETB  DQ
+  361:	  01BB	7E 1E		         MOV   R6,#30
+  362:	  01BD	DE FE		         DJNZ  R6,$
+  363:	  01BF	22		         RET
+  364:
+  365:				;================================================================================
+  366:	  01C0	D2 B7		READ:    SETB  DQ
+  367:	  01C2	00		         NOP
+  368:	  01C3	00		         NOP
+  369:	  01C4	C2 B7		         CLR   DQ
+  370:	  01C6	00		         NOP
+  371:	  01C7	00		         NOP
+  372:	  01C8	D2 B7		         SETB  DQ
+  373:	  01CA	00		         NOP
+  374:	  01CB	00		         NOP
+  375:	  01CC	00		         NOP
+  376:	  01CD	00		         NOP
+  377:	  01CE	00		         NOP
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 8
+
+
+
+ Line  I  Addr  Code            Source
+
+  378:	  01CF	00		         NOP
+  379:	  01D0	00		         NOP
+  380:	  01D1	A2 B7		         MOV   C,DQ
+  381:	  01D3	7E 17		         MOV   R6,#23
+  382:	  01D5	DE FE		         DJNZ  R6,$
+  383:	  01D7	22		         RET
+  384:
+  385:				;================================================================================
+  386:	  01D8	7C 14		DELAY10: MOV   R4,#20
+  387:	  01DA	7D 1E		D2:      MOV   R5,#30
+  388:	  01DC	DD FE		         DJNZ  R5,$
+  389:	  01DE	DC FA		         DJNZ  R4,D2
+  390:	  01E0	22		         RET
+  391:				;================================================================================
+  392:	  01E1			send_byte_BT:
+  393:	  01E1	F5 99			 mov	SBUF,A
+  394:	  01E3	30 99 FD		 jnb	TI,$
+  395:	  01E6	C2 99			 clr	TI
+  396:	  01E8	22			 ret
+  397:				;==========================================================================
+  398:				; Definição de Mensagens para Enviar ao LCD
+  399:	  01E9			LCD1:
+  400:	  01E9	20 20 20 20	        db    '     BRASIL     '
+	  01ED	20 42 52 41
+	  01F1	53 49 4C 20
+	  01F5	20 20 20 20
+  401:
+  402:	  01F9			LCD2:
+  403:	  01F9	20 46 4F 52	        db    ' FORTALEZA - CE '
+	  01FD	54 41 4C 45
+	  0201	5A 41 20 2D
+	  0205	20 43 45 20
+  404:
+  405:	  0209			LCD3:
+  406:	  0209	20 20 20 54	        db    '   TEMPERATURA  '
+	  020D	45 4D 50 45
+	  0211	52 41 54 55
+	  0215	52 41 20 20
+  407:
+  408:	  0219			LCD4:
+  409:	  0219	20 20 20 20	        db    '      ',11011111b,'C      '
+	  021D	20 20 DF 43
+	  0221	20 20 20 20
+	  0225	20 20
+  410:	  0227			LCD_INIT1:
+  411:	  0227	20 20 49 4E		db    '  INICIALIZANDO '
+	  022B	49 43 49 41
+	  022F	4C 49 5A 41
+	  0233	4E 44 4F 20
+  412:
+  413:	  0237			LCD_INIT2:
+  414:	  0237	20 20 20 20		db    '       ...      '
+	  023B	20 20 20 2E
+	  023F	2E 2E 20 20
+	  0243	20 20 20 20
+  415:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 9
+
+
+
+ Line  I  Addr  Code            Source
+
+  416:				        end                     ;Final do programa
+  417:
+
+
+
+
+
+                     register banks used:  ---
+
+                     no errors
+
+
+
+
+ASEM-51 V1.3                                        Copyright (c) 2002 by W.W. Heinz                                         PAGE 10
+
+
+
+
+
+	       L I S T   O F   S Y M B O L S
+	       =============================
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+??ASEM_51			  NUMBER    8051
+??VERSION			  NUMBER    0130
+AC				  BIT	      D6
+ACC				  DATA	      E0
+AUX0				  CODE	    00DF	 193
+AUX1				  CODE	    00EE	 217
+AUX2				  CODE	    00F5	 225
+B				  DATA	      F0
+CHCK				  CODE	    019E	 338
+CHCK0				  CODE	    01A8	 343
+CONFIG				  CODE	    0076	 107
+CY				  BIT	      D7
+D2				  CODE	    01DA	 387
+DAT				  NUMBER    00A0	   6
+DELAY10				  CODE	    01D8	 386
+DELAY500MS			  CODE	    00EC	 213
+DPH				  DATA	      83
+DPL				  DATA	      82
+DQ				  BIT	      B7	   7
+DSWD				  CODE	    0100	 243
+EA				  BIT	      AF
+EN				  NUMBER    0097	   5
+ES				  BIT	      AC
+ET0				  BIT	      A9
+ET1				  BIT	      AB
+EX0				  BIT	      A8
+EX1				  BIT	      AA
+EXTI0				  CODE	    0003
+EXTI1				  CODE	    0013
+F0				  BIT	      D5
+IE				  DATA	      A8
+IE0				  BIT	      89
+IE1				  BIT	      8B
+INICIO				  CODE	    0013	  30
+INT0				  BIT	      B2
+INT1				  BIT	      B3
+IP				  DATA	      B8
+IT0				  BIT	      88
+IT1				  BIT	      8A
+KEND				  CODE	    0143	 272
+LCD1				  CODE	    01E9	 399
+LCD2				  CODE	    01F9	 402
+LCD3				  CODE	    0209	 405
+LCD4				  CODE	    0219	 408
+LCD_HOME			  CODE	    00E7	 205
+LCD_INIT			  CODE	    0065	  93
+LCD_INIT1			  CODE	    0227	 410
+LCD_INIT2			  CODE	    0237	 413
+LOOP				  CODE	    002C	  49
+NEW_LINE			  CODE	    00E2	 198
+
+ASEM-51 V1.3                                        Copyright (c) 2002 by W.W. Heinz                                         PAGE 11
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+OV				  BIT	      D2
+P				  BIT	      D0
+P0				  DATA	      80
+P1				  DATA	      90
+P2				  DATA	      A0
+P3				  DATA	      B0
+PCON				  DATA	      87
+PS				  BIT	      BC
+PSW				  DATA	      D0
+PT0				  BIT	      B9
+PT1				  BIT	      BB
+PX0				  BIT	      B8
+PX1				  BIT	      BA
+RB8				  BIT	      9A
+RD				  BIT	      B7
+READ				  CODE	    01C0	 366
+READ1				  CODE	    0178	 310
+READ_BYTE			  CODE	    0176	 308
+REN				  BIT	      9C
+RESET				  CODE	    0000
+RI				  BIT	      98
+RS				  NUMBER    0095	   3
+RS0				  BIT	      D3
+RS1				  BIT	      D4
+RST0				  CODE	    01A6	 342
+RSTSNR				  CODE	    0180	 317
+RW				  NUMBER    0096	   4
+RXD				  BIT	      B0
+SBUF				  DATA	      99
+SCON				  DATA	      98
+SEN1				  CODE	    0170	 303
+SEN2				  CODE	    0173	 304
+SEN3				  CODE	    0167	 298
+SEND				  CODE	    008D	 125
+SEND_BYTE			  CODE	    0164	 295
+SEND_BYTE_BT			  CODE	    01E1	 392
+SEND_LCD			  CODE	    008B	 122
+SEND_LCD_TEMP			  CODE	    0096	 136
+SEND_TEMP1			  CODE	    0098	 138
+SEND_TEMP2			  CODE	    00BF	 164
+SINT				  CODE	    0023
+SM0				  BIT	      9F
+SM1				  BIT	      9E
+SM2				  BIT	      9D
+SP				  DATA	      81
+SS0				  CODE	    011B	 256
+SS1				  CODE	    0118	 254
+SS2				  CODE	    0115	 252
+T0				  BIT	      B4
+T1				  BIT	      B5
+TB8				  BIT	      9B
+TCON				  DATA	      88
+TF0				  BIT	      8D
+TF1				  BIT	      8F
+TH0				  DATA	      8C
+TH1				  DATA	      8D
+
+ASEM-51 V1.3                                        Copyright (c) 2002 by W.W. Heinz                                         PAGE 12
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+TI				  BIT	      99
+TIMER0				  CODE	    000B
+TIMER1				  CODE	    001B
+TL0				  DATA	      8A
+TL1				  DATA	      8B
+TMOD				  DATA	      89
+TR0				  BIT	      8C
+TR1				  BIT	      8E
+TRANS12				  CODE	    0146	 277
+TXD				  BIT	      B1
+WAIT				  CODE	    00DD	 190
+WDLSB				  DATA	      30	  10
+WDMSB				  DATA	      31	  11
+WR				  BIT	      B6
+WRITE_0				  CODE	    01A9	 346
+WRITE_1				  CODE	    01B2	 353
+W_DAT				  CODE	    00C8	 175
